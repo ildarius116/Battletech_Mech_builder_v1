@@ -9,24 +9,25 @@ from localization import localization_dict as lang  # Модуль локали�
 
 
 class App(tk.Tk):
-	"""Application class"""
+	""" Класс приложения """
 
 	def __init__(self, loc=0):
-		"""create window"""
+		""" Конструктор окна приложения """
 		tk.Tk.__init__(self)
 		#self.attributes('-topmost', True)  # поверх окон
 		#self.overrideredirect(False)  # рамка окна
 		self.resizable(False, False)  # запрет растягивать
 		self.title('Battletech Mech-builder')  # заголовок окна
-		self.geometry("700x800+100+100")
-		self.search_dict = {}
-		self.search_list = []
-		self.loc = loc
+		self.geometry("700x810+100+100")  # размеры окна
+		self.search_dict = {}  # поисковый словарь
+		self.search_list = []  # поисковый лист
+		self.loc = loc  # язык интерфейса
 		self.set_ui()
 
 	def set_ui(self):
 		""" Функция работы пользовательского интерфейса """
 
+		# Настройки стиля интерфейса
 		self.style = ttk.Style()
 		self.style.theme_use("default")
 		self.style.configure(self, width=15)  # расстояние между кнопками чекбокс
@@ -58,12 +59,11 @@ class App(tk.Tk):
 			self.lbl1.pack(fill='both', side='top')
 			self.lbl1.place(x=0, y=0)
 
-		self.text = lang['Start'][self.loc]
-		right_frame(self.text, False)
-
 		# Размещение окна под кнопку расчета
 		self.frm_result = ttk.Frame(self, relief=tk.RAISED, borderwidth=1)
 		self.frm_result.pack(fill='both', side='bottom')
+		self.text = lang['Start'][self.loc]
+		right_frame(self.text, False)
 
 		# Размещение окна выбора свободного веса
 		self.frm_weight = ttk.LabelFrame(self)
@@ -72,12 +72,17 @@ class App(tk.Tk):
 		self.lbl_weight.pack(side='left')
 		self.style.configure(self.frm_weight, width=50)
 		# Ползунок выбора значения свободного веса
-		self.scale = ttk.Scale(self.frm_weight, from_=0, to=100, length=140, command=self.onScale)
+		self.scale = ttk.Scale(self.frm_weight, from_=0, to=100, length=140, command=self.on_scale)
 		self.scale.pack(side='right', padx=0)
-		self.var = tk.IntVar()
-		self.lbl = ttk.Label(self.frm_weight, text=0, textvariable=self.var)
+		self.var_weight = tk.IntVar()
+		self.lbl = ttk.Label(self.frm_weight, text=0, textvariable=self.var_weight)
 		self.lbl.pack(side='right', padx=0)
 
+		# Размещение окна под выбор собственного охлаждения Меха
+		self.frm_cool = ttk.LabelFrame(self, text=lang['Own cooling'][self.loc])
+		self.frm_cool.pack(fill='both', side='top', expand=True)
+		self.chk_cool = ttk.LabelFrame(self.frm_cool, borderwidth=0)
+		self.chk_cool.pack(side='left')
 
 		# Размещение окна под прыжковые двигатели
 		self.frm_jump = ttk.LabelFrame(self, text=lang['Jump Jets'][self.loc])
@@ -152,27 +157,27 @@ class App(tk.Tk):
 		                        compound='left', width=150, font="arial.ttf", command=self.youtube)
 		btn_youtube.pack(side='right', padx=5, pady=5)
 
-		def combo_choice(outer_frame, weapon, mods, quantity, dict):
+		def combo_choice(outer_frame, weapon, mods, quantity, mydict):
 			""" Функция обработки выбора раскрывающихся кнопок
 				наполняет self.search_dict выбранным типом оружия, его/их модификацией(ми) и количеством.
 				Пример: {Missiles {'mod': '++', 'quantity': '2'}, Ballistic {'mod': 'None', 'quantity': '2'}}
 				"""
 			def selected_quant(event):
 				""" Функция обработки выбора количества оружия """
-				for key, item in dict.items():
+				for key, item in mydict.items():
 					if key == weapon:
 						item['quantity'] = combo_quant.get()
 
 			def selected_mod(event):
 				""" Функция обработки выбора модификации оружия """
-				for key, item in dict.items():
+				for key, item in mydict.items():
 					if key == weapon:
 						item['mod'] = combo_modify.get()
 
 			if weapon == 'Jump Jets':
-				dict[weapon] = {'mod': jumps[0], 'quantity': '0'}
+				mydict[weapon] = {'mod': jumps[0], 'quantity': '0'}
 			else:
-				dict[weapon] = {'mod': mods[0], 'quantity': '0'}
+				mydict[weapon] = {'mod': mods[0], 'quantity': '0'}
 			inner_frame = ttk.LabelFrame(outer_frame, borderwidth=0)
 			inner_frame.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=True)
 			combo_quant = ttk.Combobox(inner_frame, values=quantity, width=5, state='readonly')
@@ -186,17 +191,18 @@ class App(tk.Tk):
 
 		# все раскрывающиеся кнопки
 		mods = ['None', '+', '++']
-		jumps = ['Light', 'Heavy', 'Sturm']
-		# jumps = [locals['Light'][self.loc], locals['Heavy'][self.loc], locals['Sturm'][self.loc]]
-		quantity = ['0', '1', '2', '3', '4', '5', '6', '7']
+		jumps = ['Standard', 'Heavy', 'Assault']
+		# jumps = [locals['Standard'][self.loc], locals['Heavy'][self.loc], locals['Assault'][self.loc]]
+		quantity = ['0', '1', '2', '3', '4', '5', '6', '7', '8']
 		combo_choice(self.frm_jump, 'Jump Jets', jumps, quantity, self.search_dict)
 		combo_choice(self.combo_cannon, 'Ballistic', mods, quantity, self.search_dict)
 		combo_choice(self.combo_missile, 'Missile', mods, quantity, self.search_dict)
 		combo_choice(self.combo_lasers, 'Energy', mods, quantity, self.search_dict)
 		combo_choice(self.combo_support, 'Support', mods, quantity, self.search_dict)
 
-		self.var_mg, self.var_s_laser, self.var_er_s_laser, self.var_s_p_laser, self.var_jmp, self.var_gauss, \
-			self.var_ac_2, self.var_ac_5, self.var_ac_10, self.var_ac_20, \
+		self.var_cool, self.var_jmp, \
+			self.var_mg, self.var_s_laser, self.var_er_s_laser, self.var_s_p_laser, \
+			self.var_ac_2, self.var_ac_5, self.var_ac_10, self.var_ac_20, self.var_gauss, \
 			self.var_uac_2, self.var_uac_5, self.var_uac_10, self.var_uac_20, \
 			self.var_lbx_2, self.var_lbx_5, self.var_lbx_10, self.var_lbx_20, \
 			self.var_m_laser, self.var_er_m_laser, self.var_m_p_laser, \
@@ -206,10 +212,10 @@ class App(tk.Tk):
 			tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(),\
 			tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), \
 			tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), \
-			tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar()
+			tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar()
 
 		# список для хранения состояний выбора вооружения для поиска
-		self.chk_list = [[self.var_jmp, 'Jump Jets', 'Jump Jets'],
+		self.chk_list = [[self.var_cool, 'Own cooling', 'Own cooling'], [self.var_jmp, 'Jump Jets', 'Jump Jets'],
 		                 [self.var_mg, 'MG', 'Support'], [self.var_s_laser, 'S Laser', 'Support'],
 		                 [self.var_er_s_laser, 'ER S Laser', 'Support'], [self.var_s_p_laser, 'S P Laser', 'Support'],
 		                 [self.var_ac_2, 'AC/2', 'Ballistic'], [self.var_ac_5, 'AC/5', 'Ballistic'],
@@ -231,6 +237,8 @@ class App(tk.Tk):
 		                 [self.var_lrm_15, 'LRM15', 'Missile'], [self.var_lrm_20, 'LRM20', 'Missile']]
 
 		# создание всех кнопок выбора вооружения для поиска
+		chk_b_cool = ttk.Checkbutton(self.chk_cool, text=lang['60 Degrees'][self.loc], variable=self.var_cool, width=30)
+		chk_b_cool.pack()
 		chk_b_jmp = ttk.Checkbutton(self.chk_jmp, text=lang['Jump Jets'][self.loc], variable=self.var_jmp)
 		chk_b_jmp.pack()
 		chk_b_m_laser = ttk.Checkbutton(self.chk_m_lasers, text=lang['M Laser'][self.loc], variable=self.var_m_laser)
@@ -296,7 +304,11 @@ class App(tk.Tk):
 		def app_result(event):
 			""" Функция обработки нажатия кнопки расчета """
 			get_list(self.search_dict)
-			weight = self.var.get()  # получить значение свободного веса от ползунка
+			if self.var_cool.get():
+				self.search_list.append(60)
+			else:
+				self.search_list.append(30)
+			weight = self.var_weight.get()  # получить значение свободного веса от ползунка
 			self.search_list.append(int(weight))
 			result = best_combo(self.search_list)   # получить результат расчетов
 			result_frame(result)  # вывести на экран результат расчетов
@@ -325,10 +337,10 @@ class App(tk.Tk):
 		btn_result.pack(side=tk.BOTTOM, fill=tk.BOTH)
 		btn_result.bind('<Button-1>', app_result)
 
-	def onScale(self, val):
+	def on_scale(self, val):
 		""" Функция обработки ползунка свободного веса """
 		v = int(float(val))
-		self.var.set(v)
+		self.var_weight.set(v)
 
 	def app_eng(self):
 		""" Функция переключает язык интерфейса на английский """
@@ -344,13 +356,13 @@ class App(tk.Tk):
 
 	def youtube(self):
 		""" Функция открывает youtube страницу """
-		url = 'https://www.youtube.com/channel/UCiTzVxIkfzZJbl7meMzf_JA'
+		if not self.loc:  # GUIDE
+			url = 'https://www.youtube.com/channel/UCiTzVxIkfzZJbl7meMzf_JA'
+		else:  # Инструкция
+			url = 'https://www.youtube.com/channel/UCiTzVxIkfzZJbl7meMzf_JA'
 		webbrowser.open(url, new=1)
 
 
 if __name__ == '__main__':
 	root = App()
 	root.mainloop()
-
-
-

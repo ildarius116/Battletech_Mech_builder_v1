@@ -2,6 +2,12 @@ import xlrd
 
 
 def main(search_list):
+    """ Функция:
+     1. получает список искомого оружия,
+     2. считывает Excel файл с характеристиками всего имеющегося оружия,
+     3. создает список искомого оружия, добавив к нему характеристики из Excel файла
+     """
+
     weapon_type_list = []
     template_list1 = ['Type', 'Class', 'Designation', 'Modification', 'Tonnage', 'Shots', 'DMG_Single', 'Heat',
                      'Ammo_Rounds', 'DMG_Full', 'DMG/Tonn', 'Heatsinks', 'Ammo_Tonns', 'Full_Weight']
@@ -9,7 +15,7 @@ def main(search_list):
     empty_dict = {'T': ' ', 'C': ' ', 'D': ' ', 'M': ' ', 'W': 0, 'S': 0, 'DS': 0, 'H': 0, 'AR': 0,
                   'DF': 0, 'DT': 0, 'HS': 0, 'AT': 0, 'FW': 0}
 
-    """ Получение списка из экселя """
+    # Получение списка из Excel
     workbook = xlrd.open_workbook("BattleTech Weapon Efficiency.xlsx")
     worksheet = workbook.sheet_by_index(0)
     income_list = []
@@ -23,14 +29,12 @@ def main(search_list):
                 tmp_list.append(value)
         income_list.append(tmp_list)
 
-    """ Преобразование списка из экселя в библиотеку """
+    # Преобразование списка из Excel в библиотеку
     weapon_list = []
     prev_value = ''
-    search_list = search_list[1:-1]
-    # print(f'search_list = {search_list}')
+    search_list = search_list[1:-2]
     for item in income_list:
         tmp_dict = dict(zip(template_list, item))
-        # print(f'tmp_dict = {tmp_dict}')
         if tmp_dict['T'] != prev_value:
             prev_value = tmp_dict['T']
             empty_dict['T'] = prev_value
@@ -39,9 +43,7 @@ def main(search_list):
             if (tmp_dict['D'] in search_item) and (tmp_dict['M'] in search_item):
                 weapon_list.append(tmp_dict)
 
-    # print(f'weapon_list = {weapon_list}')
-
-    """ Преобразование библиотеки в список библиотек по типу оружия """
+    # Преобразование библиотеки в список библиотек по типу оружия
     tmp_list = []
     prev_value = weapon_list[0]['T']
     for value_dict in weapon_list:
@@ -59,4 +61,3 @@ def main(search_list):
 if __name__ == '__main__':
     weapon_type_list = main(search_list)
     # print(f'weapon_type_list_final = {weapon_type_list}\n\n')
-

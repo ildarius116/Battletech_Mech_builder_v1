@@ -8,6 +8,7 @@ def combinations_with_replacement(iterable, r):
         слегка переделанная из itertools.combinations_with_replacement
         combinations_with_replacement('ABC', 2) --> AA AB AC BB BC CC
     """
+
     pool = tuple(iterable)
     n = len(pool)
     r = int(r)
@@ -41,8 +42,6 @@ def type_combo(search_list, weapon_type_list):
     for i, items in enumerate(weapon_type_list):
         combo = list(combinations_with_replacement(items, search_list[i][-1]))
         combinated_list.append(combo)
-    # for i in combinated_list:
-    #     print(f'combinated_list = {i}')
     return combinated_list
 
 
@@ -51,8 +50,8 @@ def product(*args):
         слегка переделанная из itertools.product
         product('ABCD', 'xy') --> Ax Ay Bx By Cx Cy Dx Dy
      """
+
     pools = (pool for pool in args)
-    print()
     result = [[]]
     for pool in pools:
         result = [x+y for x in result for y in pool]
@@ -79,48 +78,39 @@ def final_combo(search_list, weapon_type_list):
 
 def weight(search_list):
     """ Функция расчета доступного свободного веса
-        Возвращает итоговый свободный вес, количество дополнительных или "не использованных" радиаторов
-        и дельта температуры, при использовании прыжков
+        Возвращает:
+         итоговый свободный вес,
+         собственное охлаждение (пустого) Меха,
+         не использованный "потенциал" охлаждения Меха,
+         количество дополнительных (положительное значение) или "не использованных" (отрицательное значение) радиаторов,
+         дельта температуры, при использовании прыжков
      """
 
-    jumps_dict = {'Light': 0.5, 'Heavy': 1, 'Sturm': 2}
-    initial_heat = 30  # собственное охлаждение пустого меха
-    unused_initial_weight = 10  # "условный" вес 10ти "не использованных" радиаторов
-    delta_jump_heat = 0
+    jumps_dict = {'Standard': 0.5, 'Heavy': 1, 'Assault': 2}
+    jump_heat = jump_weight = 0
     income_weight = search_list[-1]  # свободный вес, указанный при расчете
-    print('search_list[0] = ', search_list[0])
-
-    if 'Jump Jets' in search_list[0]:
-        quantity = int(search_list[0][2])   # кол-во прыжковых двигателей
+    initial_heat = search_list[-2]  # собственное охлаждение пустого меха
+    quantity = int(search_list[0][-1])  # кол-во прыжковых двигателей
+    if quantity and search_list[0][0] == 'Jump Jets':
         jump_weight = jumps_dict[search_list[0][1]] * quantity   # суммарный вес прыжковых двигателей
-        jump_heat = quantity * 8   # суммарный нагрев от прыжка
-        delta_jump_heat = jump_heat - initial_heat   # дельта охлаждения во время прыжка
-        if delta_jump_heat >= 0:
-            result_heatsink_weight = math.ceil(delta_jump_heat // 3)   # вес доп-ных радиаторов компенсации дельты
-            free_weight = income_weight - jump_weight - result_heatsink_weight  # итоговый свободный вес
-            delta_jump_heat -= result_heatsink_weight * 3  # итоговая дельта охлаждения во время прыжка
-            unused_initial_weight = 0  # задействован весь "потенциал" собственного охлаждения меха
-        else:
-            result_heatsink_weight = math.floor(delta_jump_heat // 3)   # вес "не использованных" радиаторов дельты
-            free_weight = income_weight - jump_weight  # итоговый свободный вес с учетом только двигателей
-            delta_jump_heat -= result_heatsink_weight * 3  # итоговая дельта охлаждения во время прыжка
-            unused_initial_weight += result_heatsink_weight  # "потенциал" охлаждения меха задействован частично
+        jump_heat = quantity * 2   # суммарный нагрев от прыжка
+        delta_jump_heat = initial_heat - jump_heat  # дельта охлаждения во время прыжка
+        free_weight = income_weight - jump_weight  # свободный вес с учетом двигателей и прыжков
+        unused_initial_weight = delta_jump_heat // 3   # вес "не использованных" радиаторов дельты охлаждения
     else:
-        result_heatsink_weight = -math.floor(initial_heat // 3)  # кол-во "не использованных" радиаторов дельты
+        unused_initial_weight = math.floor(initial_heat // 3)  # "условный" вес 10/20ти "не использованных" радиаторов
         free_weight = income_weight   # итоговый свободный вес
-    print('income_weight = ', income_weight)
-    print('free_weight = ', free_weight)
-    print('result_heatsink_weight = ', result_heatsink_weight)
-    print('unused_initial_weight = ', unused_initial_weight)
-    print('delta_jump_heat = ', delta_jump_heat)
-    return free_weight, unused_initial_weight, result_heatsink_weight, delta_jump_heat
+    return free_weight, initial_heat, unused_initial_weight, jump_weight, jump_heat
 
 
 def best_combo(search_list):
-    weapon_list = excel_reader.main(search_list)  # считывание списка вооружений из модуля excel_reader
-    free_weight, unused_weight, add_heatsink, delta_jump_heat = weight(search_list)
-    final_combo_list = final_combo(search_list, weapon_list)  # перебор комбинаций оружия
+    """ Функция поиска лучшей (с максимальным уроном) комбинации оружия """
+
     max_dmg = 0
+    free_weight, initial_heat, unused_weight, jump_weight, jump_heat = weight(search_list)
+    weapon_list = excel_reader.main(search_list)  # считывание списка вооружений из модуля excel_reader
+    final_combo_list = final_combo(search_list, weapon_list)  # перебор комбинаций оружия
+
     for item_i in final_combo_list:  # в каждой комбинации комбинаций
         tmp_heat = []
         tmp_weight = []
@@ -134,7 +124,7 @@ def best_combo(search_list):
             tmp_weight.append(item_j['FW'])  # список веса каждого оружия
             tmp_dmg.append(item_j['DF'])  # список урона каждого оружия
             tmp_heatsink.append(item_j['HS'])  # список количества радиаторов для каждого оружия
-            if isinstance(item_j['AT'], str):  # если боекомплект у оружия отсуствует
+            if isinstance(item_j['AT'], str):  # если боекомплект у оружия отсутствует
                 tmp_ammo.append(0)  # боекомплект для каждого оружия устанавливается в НОЛЬ (цифра)
             else:
                 tmp_ammo.append(item_j['AT'])  # список количества боекомплекта для каждого оружия
@@ -150,24 +140,31 @@ def best_combo(search_list):
             sum_dmg = sum(tmp_dmg)
             if sum_dmg >= max_dmg:  # суммарный урон выше текущего максимального значения урона
                 max_dmg = sum_dmg
-                sum_heat = (sum(tmp_heat) - (sum(tmp_heatsink) * 3)) + delta_jump_heat
+                result_heat = sum(tmp_heat) + jump_heat - cur_heatsink * 3 - initial_heat
                 best_combo = tmp_weapon.copy()
-                sum_dmg = sum(tmp_dmg)
                 sum_ammo = sum(tmp_ammo)
-                if add_heatsink > 0:  # если есть дополнительные радиаторы от прыжков
-                    sum_weight = curent_weight + add_heatsink
-                    sum_heatsink = cur_heatsink + add_heatsink
-                    unallocated_weight = free_weight - sum_weight + add_heatsink
-                else:
-                    sum_weight = curent_weight
-                    sum_heatsink = cur_heatsink
-                    unallocated_weight = free_weight - sum_weight
-    result = {'Best weapons: ': best_combo, 'Max Damage: ': sum_dmg, 'Summary weight: ': sum_weight,
+                sum_weight = curent_weight
+                sum_heatsink = cur_heatsink
+                unallocated_weight = free_weight - sum_weight
+                if unallocated_weight > 0 and result_heat > 2:  # если есть нераспределенный вес и нагрев больше 2
+                    additional_heatsink = result_heat // 3  # сколько надо дополнительных радиаторов
+                    if unallocated_weight >= additional_heatsink:  # если нераспределенный вес не меньше доп. радиаторов
+                        unallocated_weight -= additional_heatsink
+                        sum_heatsink += additional_heatsink
+                        sum_weight += additional_heatsink
+                        result_heat -= additional_heatsink * 3
+                    else:
+                        additional_heatsink -= unallocated_weight
+                        sum_heatsink += unallocated_weight
+                        sum_weight += unallocated_weight
+                        result_heat -= unallocated_weight * 3
+                        unallocated_weight = 0
+    sum_weight += jump_weight
+    result = {'Best weapons: ': best_combo, 'Max Damage: ': max_dmg, 'Summary weight: ': sum_weight,
               'Heatsink weight: ': sum_heatsink, 'Ammunition weight: ': sum_ammo,
-              'Unallocated weight: ': unallocated_weight, 'Delta heat: ': sum_heat}
-    if max_dmg == 0:
+              'Unallocated weight: ': unallocated_weight, 'Delta heat: ': result_heat}
+    if max_dmg == 0:  # если ни одна комбинация не прошла по весу
         return None
-    # print('result = ', result)
     return result
 
 if __name__ == '__main__':
