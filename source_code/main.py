@@ -18,7 +18,7 @@ class App(tk.Tk):
 		#self.overrideredirect(False)  # рамка окна
 		self.resizable(False, False)  # запрет растягивать
 		self.title('Battletech Mech-builder')  # заголовок окна
-		self.geometry("700x810+100+100")  # размеры окна
+		self.geometry("720x860+100+100")  # размеры окна
 		self.search_dict = {}  # поисковый словарь
 		self.search_list = []  # поисковый лист
 		self.loc = loc  # язык интерфейса
@@ -40,7 +40,7 @@ class App(tk.Tk):
 		# Размещение окна вывода результатов расчета
 		self.frm_right = tk.Frame(self, relief=tk.RAISED, borderwidth=1)
 		self.frm_right.pack(side='right')
-		canvas = tk.Canvas(self.frm_right, width=400, height=760)
+		canvas = tk.Canvas(self.frm_right, width=420, height=810)
 		canvas.pack()
 
 		def right_frame(text, result):
@@ -357,9 +357,9 @@ class App(tk.Tk):
 	def youtube(self):
 		""" Функция открывает youtube страницу """
 		if not self.loc:  # GUIDE
-			url = 'https://www.youtube.com/channel/UCiTzVxIkfzZJbl7meMzf_JA'
+			url = 'https://youtu.be/hhDE__W1zXY'
 		else:  # Инструкция
-			url = 'https://www.youtube.com/channel/UCiTzVxIkfzZJbl7meMzf_JA'
+			url = 'https://youtu.be/sLpUnjRptl8'
 		webbrowser.open(url, new=1)
 
 
