@@ -57,5 +57,8 @@ localization_dict = {'Jump Jets': ['Jump Jets', 'Прыжк. Двиг.'],
                                'Then click the "Calculation" button.',
                                'Укажите свободный вес, выберите оружие, его количество и модификацию. '
                                'Затем нажмите кнопку "Расчет".'],
-                     'GUIDE': ['   GUIDE', ' Инструкция']
+                     'GUIDE': ['   GUIDE', ' Инструкция'],
+                     'ON TOP': ['Always ON TOP (Game in Windowed mode)', 'Всегда НАВЕРХУ (Игра в оконном режиме)'],
+                     'Warhammer': ['+20% Energy (Warhammer)', '+20% Энергетическое (Вархаммер)'],
+                     'Annihilator': ['+20% Ballistic (Annihilator)', '+20% Баллистическое (Аннигилятор)']
                      }

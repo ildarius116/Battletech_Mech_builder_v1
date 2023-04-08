@@ -3,6 +3,7 @@ from tkinter import ttk
 from PIL import Image, ImageTk, ImageFont, ImageDraw
 from textwrap import wrap
 import webbrowser
+from typing import Any, Dict, Callable
 
 from comb_sum import best_combo  # Модуль расчета лучшей комбинации оружия
 from localization import localization_dict as lang  # Модуль локализации пользовательского интерфейса (рус/англ)
@@ -14,11 +15,11 @@ class App(tk.Tk):
 	def __init__(self, loc=0):
 		""" Конструктор окна приложения """
 		tk.Tk.__init__(self)
-		#self.attributes('-topmost', True)  # поверх окон
+		self.attributes('-topmost', False)  # поверх окон (True/False)
 		#self.overrideredirect(False)  # рамка окна
 		self.resizable(False, False)  # запрет растягивать
 		self.title('Battletech Mech-builder')  # заголовок окна
-		self.geometry("720x860+100+100")  # размеры окна
+		self.geometry("720x900+100+100")  # размеры окна
 		self.search_dict = {}  # поисковый словарь
 		self.search_list = []  # поисковый лист
 		self.loc = loc  # язык интерфейса
@@ -40,7 +41,7 @@ class App(tk.Tk):
 		# Размещение окна вывода результатов расчета
 		self.frm_right = tk.Frame(self, relief=tk.RAISED, borderwidth=1)
 		self.frm_right.pack(side='right')
-		canvas = tk.Canvas(self.frm_right, width=420, height=810)
+		canvas = tk.Canvas(self.frm_right, width=420, height=850)
 		canvas.pack()
 
 		def right_frame(text, result):
@@ -151,6 +152,12 @@ class App(tk.Tk):
 		btn_eng = ttk.Button(self.top_frm, text="English", command=self.app_eng)
 		btn_eng.pack(side='left', padx=5, pady=5)
 
+		# кнопка ON TOP
+		self.var_on_top = tk.IntVar()
+		chk_b_top = ttk.Checkbutton(self.top_frm, text=lang['ON TOP'][self.loc], variable=self.var_on_top, width=45,
+		                            command=self.set_on_top)
+		chk_b_top.pack(side='left', padx=50)
+
 		# кнопки перехода на сайт Youtube
 		self.image = ImageTk.PhotoImage(file="Youtube.png", size=10)
 		btn_youtube = tk.Button(self.top_frm, image=self.image, text=lang['GUIDE'][self.loc],
@@ -200,7 +207,7 @@ class App(tk.Tk):
 		combo_choice(self.combo_lasers, 'Energy', mods, quantity, self.search_dict)
 		combo_choice(self.combo_support, 'Support', mods, quantity, self.search_dict)
 
-		self.var_cool, self.var_jmp, \
+		self.var_cool, self.var_jmp, self.var_warhmr, self.var_anni, \
 			self.var_mg, self.var_s_laser, self.var_er_s_laser, self.var_s_p_laser, \
 			self.var_ac_2, self.var_ac_5, self.var_ac_10, self.var_ac_20, self.var_gauss, \
 			self.var_uac_2, self.var_uac_5, self.var_uac_10, self.var_uac_20, \
@@ -212,7 +219,8 @@ class App(tk.Tk):
 			tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(),\
 			tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), \
 			tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), \
-			tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar()
+			tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), tk.IntVar(), \
+			tk.IntVar(), tk.IntVar()
 
 		# список для хранения состояний выбора вооружения для поиска
 		self.chk_list = [[self.var_cool, 'Own cooling', 'Own cooling'], [self.var_jmp, 'Jump Jets', 'Jump Jets'],
@@ -237,8 +245,12 @@ class App(tk.Tk):
 		                 [self.var_lrm_15, 'LRM15', 'Missile'], [self.var_lrm_20, 'LRM20', 'Missile']]
 
 		# создание всех кнопок выбора вооружения для поиска
-		chk_b_cool = ttk.Checkbutton(self.chk_cool, text=lang['60 Degrees'][self.loc], variable=self.var_cool, width=30)
+		chk_b_cool = ttk.Checkbutton(self.chk_cool, text=lang['60 Degrees'][self.loc], variable=self.var_cool, width=35)
 		chk_b_cool.pack()
+		chk_b_warhmr = ttk.Checkbutton(self.chk_cool, text=lang['Warhammer'][self.loc], variable=self.var_warhmr, width=35)
+		chk_b_warhmr.pack()
+		chk_b_anni = ttk.Checkbutton(self.chk_cool, text=lang['Annihilator'][self.loc], variable=self.var_anni, width=35)
+		chk_b_anni.pack()
 		chk_b_jmp = ttk.Checkbutton(self.chk_jmp, text=lang['Jump Jets'][self.loc], variable=self.var_jmp)
 		chk_b_jmp.pack()
 		chk_b_m_laser = ttk.Checkbutton(self.chk_m_lasers, text=lang['M Laser'][self.loc], variable=self.var_m_laser)
@@ -304,10 +316,19 @@ class App(tk.Tk):
 		def app_result(event):
 			""" Функция обработки нажатия кнопки расчета """
 			get_list(self.search_dict)
-			if self.var_cool.get():
+
+			tmp_boost = [0, 0]  # усиление для Энергетического и Баллистического оружия
+			if self.var_warhmr.get():
+				tmp_boost[0] = 1  # усиление для Энергетического оружия
+			if self.var_anni.get():
+				tmp_boost[1] = 1  # усиление для Баллистического оружия
+			self.search_list.append(tmp_boost)
+
+			if self.var_cool.get():  # выбор температуры собственного охлаждения меха
 				self.search_list.append(60)
 			else:
 				self.search_list.append(30)
+
 			weight = self.var_weight.get()  # получить значение свободного веса от ползунка
 			self.search_list.append(int(weight))
 			result = best_combo(self.search_list)   # получить результат расчетов
@@ -327,7 +348,6 @@ class App(tk.Tk):
 					else:
 						txt += f'{lang[key][self.loc]} = {str(int(value))} \n'
 				right_frame(txt, True)
-				# self.frm_right.update()
 			else:
 				txt = lang['Oops'][self.loc]
 				right_frame(txt, False)
@@ -336,6 +356,13 @@ class App(tk.Tk):
 		btn_result = ttk.Button(self.frm_result, text=lang['Calculation'][self.loc])
 		btn_result.pack(side=tk.BOTTOM, fill=tk.BOTH)
 		btn_result.bind('<Button-1>', app_result)
+
+	def set_on_top(self):
+		""" Функция обработки кнопки ON TOP """
+		if self.var_on_top.get():
+			self.attributes('-topmost', True)  # поверх окон
+		else:
+			self.attributes('-topmost', False)
 
 	def on_scale(self, val):
 		""" Функция обработки ползунка свободного веса """

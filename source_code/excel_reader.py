@@ -8,7 +8,6 @@ def main(search_list):
      3. создает список искомого оружия, добавив к нему характеристики из Excel файла
      """
 
-    weapon_type_list = []
     template_list1 = ['Type', 'Class', 'Designation', 'Modification', 'Tonnage', 'Shots', 'DMG_Single', 'Heat',
                      'Ammo_Rounds', 'DMG_Full', 'DMG/Tonn', 'Heatsinks', 'Ammo_Tonns', 'Full_Weight']
     template_list = ['T', 'C', 'D', 'M', 'W', 'S', 'DS', 'H', 'AR', 'DF', 'DT', 'HS', 'AT', 'FW']
@@ -29,32 +28,43 @@ def main(search_list):
                 tmp_list.append(value)
         income_list.append(tmp_list)
 
+    energy_boost = search_list[-3][0]  # наличие усиления для Энергетического оружия
+    ballistic_boost = search_list[-3][1]  # наличие усиления для Баллистического оружия
+    boosty = ''
+    if energy_boost:
+        boosty = 'Energy'
+    if ballistic_boost:
+        boosty = 'Ballistic'
+
     # Преобразование списка из Excel в библиотеку
     weapon_list = []
     prev_value = ''
-    search_list = search_list[1:-2]
-    for item in income_list:
-        tmp_dict = dict(zip(template_list, item))
-        if tmp_dict['T'] != prev_value:
+    search_list = search_list[1:-3]  # отсечение сервисной информации (прыжк. двиг., усиление, собств. охлаждение, вес)
+    for item in income_list:  # для каждого элемента списка из Excel
+        tmp_dict = dict(zip(template_list, item))  # создаем словарь по шаблону
+        if tmp_dict['T'] == boosty:  # если есть усиливаемое оружие
+            tmp_dict['DF'] *= 1.2
+        if tmp_dict['T'] != prev_value:  # если данный тип вооружения еще не встречался
             prev_value = tmp_dict['T']
-            empty_dict['T'] = prev_value
-            weapon_list.append(empty_dict.copy())
-        for search_item in search_list:
-            if (tmp_dict['D'] in search_item) and (tmp_dict['M'] in search_item):
-                weapon_list.append(tmp_dict)
+            empty_dict['T'] = prev_value  # создать словарь с этим типом вооружения и нулевыми параметрами
+            weapon_list.append(empty_dict.copy())  # добавить этот "пустой" словарь в список оружия
+        for search_item in search_list:  # для каждого элемента поискового списка
+            if (tmp_dict['D'] in search_item) and (tmp_dict['M'] in search_item):  # если они же есть в текущем словаре
+                weapon_list.append(tmp_dict)  # добавить этот словарь в список оружия
 
     # Преобразование библиотеки в список библиотек по типу оружия
     tmp_list = []
+    weapon_type_list = []  # итоговый список типов оружия
     prev_value = weapon_list[0]['T']
-    for value_dict in weapon_list:
-        if value_dict['T'] == prev_value:
-            tmp_list.append(value_dict)
-        else:
-            weapon_type_list.append(tmp_list.copy())
+    for value_dict in weapon_list:  # для каждого словаря в списке оружия
+        if value_dict['T'] == prev_value:  # если тип оружия такой же, как и в предыдущем словаре
+            tmp_list.append(value_dict)  # добавить словарь во временный список
+        else:  # иначе
+            weapon_type_list.append(tmp_list.copy())  # добавить временный словарь в список типов оружия
             prev_value = value_dict['T']
-            tmp_list.clear()
-            tmp_list.append(value_dict)
-    weapon_type_list.append(tmp_list.copy())
+            tmp_list.clear()  # очистить временный список
+            tmp_list.append(value_dict)  # добавить словарь во временный список
+    weapon_type_list.append(tmp_list.copy())  # добавить последний временный словарь в список типов оружия
     return weapon_type_list
 
 
