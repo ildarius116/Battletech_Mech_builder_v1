@@ -1,7 +1,8 @@
 import xlrd
+from typing import Dict, List, Any
 
 
-def main(search_list):
+def main(search_list: List[Any]) -> List[List[Dict]]:
     """ Функция:
      1. получает список искомого оружия,
      2. считывает Excel файл с характеристиками всего имеющегося оружия,

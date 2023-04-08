@@ -1,9 +1,10 @@
 import math
+from typing import Any, Dict, List, Tuple
 
 import excel_reader  # Модуль считывания данных об оружии из Excel файла
 
 
-def combinations_with_replacement(iterable, r):
+def combinations_with_replacement(iterable: List[Dict], r: int) -> List[List[Dict]]:
     """ Функция создания комбинаций оружия
         слегка переделанная из itertools.combinations_with_replacement
         combinations_with_replacement('ABC', 2) --> AA AB AC BB BC CC
@@ -26,22 +27,30 @@ def combinations_with_replacement(iterable, r):
         yield list(pool[i] for i in indices)
 
 
-def type_combo(search_list, weapon_type_list):
+def type_combo(search_list: List[List], weapon_type_list: List[List[Dict]]) -> List[List[List[Dict]]]:
     """ Функция комбинации оружия внутри типа оружия
         выдает 4 комбинации (списком) каждого вида оружия по типу
         combinated_list = [
-        [[{'T': 'Ballistic'}, {'T': 'Ballistic'}], [{'T': 'Ballistic'}, {'T': 'Ballistic'}]],
-        [[{'T': 'Missile'}, {'T': 'Missile'}], [{'T': 'Missile'}, {'T': 'Missile'}]],
-        [[{'T': 'Energy'}, {'T': 'Energy'}], [{'T': 'Energy'}, {'T': 'Energy'}], [{'T': 'Energy'}, {'T': 'Energy'}]],
-        [[{'T': 'Support'}, {'T': 'Support'}], [{'T': 'Support'}, {'T': 'Support'}]]
+            [
+            [{'T': 'Ballistic'}, {'T': 'Ballistic'}], [{'T': 'Ballistic'}, {'T': 'Ballistic'}]
+            ],
+            [
+            [{'T': 'Missile'}, {'T': 'Missile'}], [{'T': 'Missile'}, {'T': 'Missile'}]
+            ],
+            [
+            [{'T': 'Energy'}, {'T': 'Energy'}], [{'T': 'Energy'}, {'T': 'Energy'}], [{'T': 'Energy'}, {'T': 'Energy'}]
+            ],
+            [
+            [{'T': 'Support'}, {'T': 'Support'}], [{'T': 'Support'}, {'T': 'Support'}]
+            ]
         ]
      """
 
     combinated_list = []
-    search_list = search_list[1:]
-    for i, items in enumerate(weapon_type_list):
-        combo = list(combinations_with_replacement(items, search_list[i][-1]))
-        combinated_list.append(combo)
+    search_list = search_list[1:]  # удаление из списка прыжковых двигателей
+    for i, items in enumerate(weapon_type_list):  # для каждого типа оружия
+        combo = list(combinations_with_replacement(items, search_list[i][-1]))  # комбинация всех орудий между собой
+        combinated_list.append(combo)  # добавление комбинации каждого типа в комбинированный список
     return combinated_list
 
 
@@ -58,25 +67,28 @@ def product(*args):
     return result
 
 
-def final_combo(search_list, weapon_type_list):
+def final_combo(search_list: List[List], weapon_type_list: List[List[Dict]]) -> List[List[Dict]]:
     """ Функция комбинации комбинаций оружия перемешивает все 4 типа оружия (их списки комбинаций) между собой
     в общем виде:
-     ['UAC/2', 'UAC/2', 'UAC/2', ' ', 'LRM10', 'LRM10', 'LRM10', 'M Laser', 'M Laser',
-     'S Laser', 'S Laser', 'S Laser', 'S Laser', 'S Laser']
+     [
+     [{"UAC/2"}, {"UAC/2"}, {"LRM10"}, {"LRM10"}, {"M Laser"}, {"M Laser"}, {"S Laser"}, {"S Laser"}],
+     [{"UAC/2"}, {"UAC/2"}, {"UAC/2"}, {"LRM10"}, {"M Laser"}, {"M Laser"}, {"S Laser"}, {"S Laser"}],
+     [{"UAC/2"}, {"UAC/2"}, {"UAC/2"}, {"LRM10"}, {"LRM10"}, {"LRM10"}, {"S Laser"}, {"S Laser"}],
+     ]
      """
 
-    combinated_list = type_combo(search_list, weapon_type_list)
+    combinated_list = type_combo(search_list, weapon_type_list)  # получение списка комбинаций оружия по типам
     final_combo_list = []
     for item in combinated_list:
-        if final_combo_list:
-            tmp_list = list(product(final_combo_list, item))
-            final_combo_list = tmp_list.copy()
-        else:
-            final_combo_list = item
+        if final_combo_list:  # список комбинаций НЕ пустой
+            tmp_list = list(product(final_combo_list, item))  # получить пере-комбинацию типов оружия
+            final_combo_list = tmp_list.copy()  # заменить список комбинаций на новую пере-комбинацию оружия
+        else:  # иначе
+            final_combo_list = item  # вставить текущую комбинацию оружия в финальный список комбинаций
     return final_combo_list
 
 
-def weight(search_list):
+def get_weight(search_list: List[Any]) -> Tuple:
     """ Функция расчета доступного свободного веса
         Возвращает:
          итоговый свободный вес,
@@ -89,7 +101,7 @@ def weight(search_list):
     jumps_dict = {'Standard': 0.5, 'Heavy': 1, 'Assault': 2}
     jump_heat = jump_weight = 0
     income_weight = search_list[-1]  # свободный вес, указанный при расчете
-    initial_heat = search_list[-2]  # собственное охлаждение пустого меха
+    initial_heat = int(search_list[-2])  # собственное охлаждение пустого меха
     quantity = int(search_list[0][-1])  # кол-во прыжковых двигателей
     if quantity and search_list[0][0] == 'Jump Jets':
         jump_weight = jumps_dict[search_list[0][1]] * quantity   # суммарный вес прыжковых двигателей
@@ -103,14 +115,13 @@ def weight(search_list):
     return free_weight, initial_heat, unused_initial_weight, jump_weight, jump_heat
 
 
-def best_combo(search_list):
+def best_combo(search_list: List[Any]) -> Dict or None:
     """ Функция поиска лучшей (с максимальным уроном) комбинации оружия """
 
     max_dmg = 0
-    free_weight, initial_heat, unused_weight, jump_weight, jump_heat = weight(search_list)
+    free_weight, initial_heat, unused_weight, jump_weight, jump_heat = get_weight(search_list)
     weapon_list = excel_reader.main(search_list)  # считывание списка вооружений из модуля excel_reader
     final_combo_list = final_combo(search_list, weapon_list)  # перебор комбинаций оружия
-
     for item_i in final_combo_list:  # в каждой комбинации комбинаций
         tmp_heat = []
         tmp_weight = []

@@ -3,7 +3,7 @@ from tkinter import ttk
 from PIL import Image, ImageTk, ImageFont, ImageDraw
 from textwrap import wrap
 import webbrowser
-from typing import Any, Dict, Callable
+from typing import Any, Dict, List, Text
 
 from comb_sum import best_combo  # Модуль расчета лучшей комбинации оружия
 from localization import localization_dict as lang  # Модуль локализации пользовательского интерфейса (рус/англ)
@@ -44,7 +44,7 @@ class App(tk.Tk):
 		canvas = tk.Canvas(self.frm_right, width=420, height=850)
 		canvas.pack()
 
-		def right_frame(text, result):
+		def right_frame(text: Text, result: False) -> None:
 			""" Функция вывода текста над картинкой в окне результатов расчета """
 
 			self.result_image = Image.open("Torso.png")
@@ -164,18 +164,18 @@ class App(tk.Tk):
 		                        compound='left', width=150, font="arial.ttf", command=self.youtube)
 		btn_youtube.pack(side='right', padx=5, pady=5)
 
-		def combo_choice(outer_frame, weapon, mods, quantity, mydict):
+		def combo_choice(outer_frame: Any, weapon: str, mod: List, quant: List, mydict: Dict) -> None:
 			""" Функция обработки выбора раскрывающихся кнопок
 				наполняет self.search_dict выбранным типом оружия, его/их модификацией(ми) и количеством.
 				Пример: {Missiles {'mod': '++', 'quantity': '2'}, Ballistic {'mod': 'None', 'quantity': '2'}}
 				"""
-			def selected_quant(event):
+			def selected_quant(event) -> None:
 				""" Функция обработки выбора количества оружия """
 				for key, item in mydict.items():
 					if key == weapon:
 						item['quantity'] = combo_quant.get()
 
-			def selected_mod(event):
+			def selected_mod(event) -> None:
 				""" Функция обработки выбора модификации оружия """
 				for key, item in mydict.items():
 					if key == weapon:
@@ -187,11 +187,11 @@ class App(tk.Tk):
 				mydict[weapon] = {'mod': mods[0], 'quantity': '0'}
 			inner_frame = ttk.LabelFrame(outer_frame, borderwidth=0)
 			inner_frame.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=True)
-			combo_quant = ttk.Combobox(inner_frame, values=quantity, width=5, state='readonly')
+			combo_quant = ttk.Combobox(inner_frame, values=quant, width=5, state='readonly')
 			combo_quant.pack(side=tk.LEFT)
 			combo_quant.current(0)
 			combo_quant.bind("<<ComboboxSelected>>", selected_quant)
-			combo_modify = ttk.Combobox(inner_frame, values=mods, width=10, state='readonly')
+			combo_modify = ttk.Combobox(inner_frame, values=mod, width=10, state='readonly')
 			combo_modify.current(0)
 			combo_modify.pack(side=tk.LEFT)
 			combo_modify.bind("<<ComboboxSelected>>", selected_mod)
@@ -297,7 +297,7 @@ class App(tk.Tk):
 		chk_b_s_p_laser = ttk.Checkbutton(self.chk_smalls, text=lang['S P Laser'][self.loc], variable=self.var_s_p_laser)
 		chk_b_mg.pack(), chk_b_s_laser.pack(), chk_b_er_s_laser.pack(), chk_b_s_p_laser.pack()
 
-		def get_list(my_dict):
+		def get_list(my_dict: Dict) -> None:
 			""" Функция преобразования поискового словаря self.search_dict в поисковый словарь формата:
 			    search_list = [['Jump Jets', 'Light', '3'], ['S Laser', 'None', '4'],
 			    ['SRM6', 'LRM10', 'LRM15', '++', '2'], ['M Lasers', 'L Lasers', '++', '0'],
@@ -313,7 +313,7 @@ class App(tk.Tk):
 				tmp_list.append(value['quantity'])
 				self.search_list.append(tmp_list)
 
-		def app_result(event):
+		def app_result(event) -> None:
 			""" Функция обработки нажатия кнопки расчета """
 			get_list(self.search_dict)
 
@@ -334,7 +334,7 @@ class App(tk.Tk):
 			result = best_combo(self.search_list)   # получить результат расчетов
 			result_frame(result)  # вывести на экран результат расчетов
 
-		def result_frame(arg):
+		def result_frame(arg: Dict or None) -> None:
 			""" Функция вывода результатов расчета на экран """
 			if arg:
 				txt = ''
@@ -357,31 +357,31 @@ class App(tk.Tk):
 		btn_result.pack(side=tk.BOTTOM, fill=tk.BOTH)
 		btn_result.bind('<Button-1>', app_result)
 
-	def set_on_top(self):
+	def set_on_top(self) -> None:
 		""" Функция обработки кнопки ON TOP """
 		if self.var_on_top.get():
 			self.attributes('-topmost', True)  # поверх окон
 		else:
 			self.attributes('-topmost', False)
 
-	def on_scale(self, val):
+	def on_scale(self, val: str) -> None:
 		""" Функция обработки ползунка свободного веса """
 		v = int(float(val))
 		self.var_weight.set(v)
 
-	def app_eng(self):
+	def app_eng(self) -> None:
 		""" Функция переключает язык интерфейса на английский """
 		if self.loc:
 			self.destroy()
 			self.__init__(0)
 
-	def app_rus(self):
+	def app_rus(self) -> None:
 		""" Функция переключает язык интерфейса на русский """
 		if not self.loc:
 			self.destroy()
 			self.__init__(1)
 
-	def youtube(self):
+	def youtube(self) -> None:
 		""" Функция открывает youtube страницу """
 		if not self.loc:  # GUIDE
 			url = 'https://youtu.be/hhDE__W1zXY'
