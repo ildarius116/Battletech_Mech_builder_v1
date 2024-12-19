@@ -1,7 +1,0 @@
-version 1.0 - realise
-
-version 1.1:
-added Buttons:
-Always ON TOP (Game in Windowed mode)
-+20% Energy (Warhammer)
-+20% Ballistic (Annihilator)

@@ -1,0 +1,5 @@
+pyinstaller:
+pyinstaller --noconfirm --onedir --windowed --icon "C:\Users\ildarius\PycharmProjects\Battletech_build_v1.0\source_code\BT.ico" --add-data "C:\Users\ildarius\PycharmProjects\Battletech_build_v1.0\source_code\BattleTech Weapon Efficiency.xlsx;." --add-data "C:\Users\ildarius\PycharmProjects\Battletech_build_v1.0\source_code\Torso.png;." --add-data "C:\Users\ildarius\PycharmProjects\Battletech_build_v1.0\source_code\Youtube.png;."  "C:\Users\ildarius\PycharmProjects\Battletech_build_v1.0\source_code\main.py"
+
+nuitka:
+python -m nuitka --follow-imports --standalone --onefile --windows-icon-from-ico=BT.ico --enable-plugin=tk-inter --include-data-files="C:/Users/ildarius/PycharmProjects/Battletech_build_v1.0/source_code/BattleTech_Weapon_Efficiency.xls"=BattleTech_Weapon_Efficiency.xls --include-data-files="C:/Users/ildarius/PycharmProjects/Battletech_build_v1.0/source_code/Torso.png"=Torso.png --include-data-files="C:/Users/ildarius/PycharmProjects/Battletech_build_v1.0/source_code/Youtube.png"=Youtube.png --product-name="Battletech Mech builder" --product-version=1.0 --output-filename="Battletech Mech builder" main.py

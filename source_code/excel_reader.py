@@ -16,7 +16,7 @@ def main(search_list: List[Any]) -> List[List[Dict]]:
                   'DF': 0, 'DT': 0, 'HS': 0, 'AT': 0, 'FW': 0}
 
     # Получение списка из Excel
-    workbook = xlrd.open_workbook("BattleTech Weapon Efficiency.xlsx")
+    workbook = xlrd.open_workbook("BattleTech_Weapon_Efficiency.xls")
     worksheet = workbook.sheet_by_index(0)
     income_list = []
     for i in range(3, 102):  # количество считываемых строк таблицы
